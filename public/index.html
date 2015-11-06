@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+  <meta charset="utf-8">
+  <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ramda/0.18.0/ramda.min.js"></script>
+  <title>Simple markers</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    #map {
+      height: 100%;
+    }
+  </style>
+</head>
+
+  <body>
+    <div id="map"></div>
+    <script>
+    'use strict';
+
+    var _ = R,
+        extend = function(obj1, obj2) { return $.extend(obj1, obj2); },
+        addProperty = function(k, v, obj) { var newObj = {}; newObj[k] = v; return newObj; },
+        toNum = function(str) { return Number(str); };
+
+    function initMap() {
+      // [x, y] => { lat: x, lng: y }
+      var coordPairToObj = function(coordPair) {
+        var curryAddProp = _.curry(addProperty),
+          addLat = curryAddProp('lat'),
+          addLong = curryAddProp('lng'),
+          first = _.compose(toNum, _.curry(_.nth)(0)),
+          second = _.compose(toNum, _.curry(_.nth)(1)),
+          firstToLat = _.curry(_.compose(addLat, first))(coordPair),
+          secondToLong = _.curry(_.compose(addLong, second))(coordPair),
+          coordObj = extend(firstToLat({}), secondToLong({}));
+        return coordObj;
+      },
+
+      addCoordinateToMap = function(map, coordPair) {
+        var coordObj = coordPairToObj(coordPair);
+        console.log(coordObj);
+
+        var marker = new google.maps.Marker({
+          position: coordObj,
+          map: map,
+        });
+      };
+
+      $.ajax({
+        url: 'lots.json',
+        type: 'get',
+        success: function(d) { 
+          d.forEach(function(e) { 
+            addCoordinateToMap(map, e); 
+          });
+        },
+        error: function(e) {
+          console.log(e);
+        }
+      });
+
+
+      var map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 14,
+        center: { lat: 34.021, lng: -118.508333 }
+      });
+    }
+
+    $(document).ready(function() {
+    });
+    </script>
+    <script async defer
+      src="https://maps.googleapis.com/maps/api/js?key=YOURAPIKEYsigned_in=true&callback=initMap"></script>
+  </body>
+</html>
+
